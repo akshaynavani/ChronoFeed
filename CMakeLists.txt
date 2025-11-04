@@ -19,6 +19,9 @@ add_compile_options(-Wall -Wextra -Wpedantic)
 add_library(chronofeed_core
   src/config.cpp
   src/log.cpp
+  src/payload.cpp
+  src/mqtt/packet.cpp
+  src/mqtt/client.cpp
 )
 
 target_include_directories(chronofeed_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
