@@ -22,6 +22,8 @@ struct MqttConfig {
 struct RtConfig {
   bool enable_fifo = true;     // request SCHED_FIFO (needs CAP_SYS_NICE / rtprio limit)
   bool lock_memory = true;     // mlockall(MCL_CURRENT | MCL_FUTURE)
+  bool busy_poll = true;       // consumers spin instead of sleeping when rings are empty
+  int idle_sleep_us = 20;      // back-off sleep when busy_poll is false or spin budget is spent
   int ingest_cpu = 1;          // -1 = do not pin
   int process_cpu = 2;
   int sink_cpu = 3;

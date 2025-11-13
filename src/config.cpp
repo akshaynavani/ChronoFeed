@@ -62,6 +62,8 @@ Config config_from_map(const std::map<std::string, std::string>& kv) {
 
       {"rt.enable_fifo", [&](auto& k, auto& v) { c.rt.enable_fifo = parse_bool(k, v); }},
       {"rt.lock_memory", [&](auto& k, auto& v) { c.rt.lock_memory = parse_bool(k, v); }},
+      {"rt.busy_poll", [&](auto& k, auto& v) { c.rt.busy_poll = parse_bool(k, v); }},
+      {"rt.idle_sleep_us", [&](auto& k, auto& v) { c.rt.idle_sleep_us = static_cast<int>(parse_int(k, v)); }},
       {"rt.ingest_cpu", [&](auto& k, auto& v) { c.rt.ingest_cpu = static_cast<int>(parse_int(k, v)); }},
       {"rt.process_cpu", [&](auto& k, auto& v) { c.rt.process_cpu = static_cast<int>(parse_int(k, v)); }},
       {"rt.sink_cpu", [&](auto& k, auto& v) { c.rt.sink_cpu = static_cast<int>(parse_int(k, v)); }},
