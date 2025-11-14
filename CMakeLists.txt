@@ -27,6 +27,8 @@ add_library(chronofeed_core
   src/deadline.cpp
   src/stages.cpp
   src/pipeline.cpp
+  src/ntp/sntp.cpp
+  src/ntp/discipline.cpp
 )
 
 target_include_directories(chronofeed_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

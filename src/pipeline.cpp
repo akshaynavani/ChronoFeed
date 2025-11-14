@@ -7,12 +7,23 @@
 
 namespace chronofeed {
 
+namespace {
+std::unique_ptr<WallClockSource> make_clock(const NtpConfig& ntp) {
+  if (ntp.enabled) return std::make_unique<ntp::DisciplinedClock>();
+  return std::make_unique<SystemWallClock>();
+}
+}  // namespace
+
 Pipeline::Pipeline(Config cfg)
     : cfg_(std::move(cfg)),
-      clock_(std::make_unique<SystemWallClock>()),
+      clock_(make_clock(cfg_.ntp)),
       monitor_(cfg_.pipeline.deadline_ns),
       ring_a_(cfg_.pipeline.ring_capacity),
       ring_b_(cfg_.pipeline.ring_capacity) {
+  if (cfg_.ntp.enabled) {
+    disciplined_ = static_cast<ntp::DisciplinedClock*>(clock_.get());
+    ntp_ = std::make_unique<ntp::NtpSynchronizer>(cfg_.ntp, *disciplined_);
+  }
   ingest_ = std::make_unique<IngestStage>(ring_a_, monitor_, *clock_);
   process_ = std::make_unique<ProcessStage>(ring_a_, ring_b_, monitor_, cfg_.pipeline, cfg_.rt);
   sink_ = std::make_unique<SinkStage>(ring_b_, monitor_, cfg_.pipeline, cfg_.rt);
@@ -31,6 +42,10 @@ void Pipeline::start() {
   rt::ThreadSpec proc_spec{"cf-process", cfg_.rt.process_cpu, cfg_.rt.process_priority, fifo};
   rt::ThreadSpec ingest_spec{"cf-ingest", cfg_.rt.ingest_cpu, cfg_.rt.ingest_priority, fifo};
   rt::ThreadSpec report_spec{"cf-report", -1, 0, false, 64 * 1024};
+
+  // NTP runs best-effort in the background; samples are stamped with the seeded
+  // system time until it converges (transit stats wait for synchronisation).
+  if (ntp_) ntp_->start();
 
   // Start downstream first so consumers are ready before data flows.
   sink_thread_ = rt::spawn(sink_spec, [this] { sink_->run(running_); });
@@ -51,6 +66,7 @@ void Pipeline::stop() {
   if (process_thread_.joinable()) process_thread_.join();
   if (sink_thread_.joinable()) sink_thread_.join();
   if (reporter_thread_.joinable()) reporter_thread_.join();
+  if (ntp_) ntp_->stop();
 
   CF_LOG_INFO("pipeline: final %s", monitor_.format(monitor_.report()).c_str());
 }
@@ -70,6 +86,13 @@ void Pipeline::reporter_loop() {
                 static_cast<unsigned long long>(cs.messages.load()),
                 static_cast<unsigned long long>(cs.reconnects.load()), ring_a_.size_approx(),
                 ring_b_.size_approx());
+    if (ntp_) {
+      const auto ns = ntp_->status();
+      CF_LOG_INFO("report: ntp synced=%d offset=%+.3fms delay=%.3fms freq=%+.3fppm ok=%llu rej=%llu fail=%llu",
+                  disciplined_->synchronized() ? 1 : 0, ns_to_ms(ns.last_offset_ns), ns_to_ms(ns.last_delay_ns),
+                  ns.freq_ppm, static_cast<unsigned long long>(ns.accepted),
+                  static_cast<unsigned long long>(ns.rejected), static_cast<unsigned long long>(ns.failures));
+    }
     if (r.missed > 0) {
       CF_LOG_WARN("report: deadline guarantee violated for %llu samples (%.4f%%)",
                   static_cast<unsigned long long>(r.missed), r.miss_ratio() * 100.0);

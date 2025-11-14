@@ -8,6 +8,7 @@
 #include "chronofeed/config.hpp"
 #include "chronofeed/deadline.hpp"
 #include "chronofeed/mqtt/client.hpp"
+#include "chronofeed/ntp/discipline.hpp"
 #include "chronofeed/stages.hpp"
 
 namespace chronofeed {
@@ -18,7 +19,7 @@ namespace chronofeed {
 //            ^                                                        |
 //     disciplined clock                                     DeadlineMonitor
 //
-// plus a non-RT reporter thread that periodically logs deadline statistics.
+// plus non-RT threads for NTP clock discipline and periodic deadline reports.
 class Pipeline {
  public:
   explicit Pipeline(Config cfg);
@@ -38,6 +39,8 @@ class Pipeline {
 
   Config cfg_;
   std::unique_ptr<WallClockSource> clock_;
+  ntp::DisciplinedClock* disciplined_ = nullptr;  // non-owning view of clock_ when NTP is on
+  std::unique_ptr<ntp::NtpSynchronizer> ntp_;
   DeadlineMonitor monitor_;
   SampleRing ring_a_;
   SampleRing ring_b_;
