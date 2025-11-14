@@ -22,7 +22,15 @@ add_library(chronofeed_core
   src/payload.cpp
   src/mqtt/packet.cpp
   src/mqtt/client.cpp
+  src/rt/thread.cpp
+  src/histogram.cpp
+  src/deadline.cpp
+  src/stages.cpp
+  src/pipeline.cpp
 )
 
 target_include_directories(chronofeed_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(chronofeed_core PUBLIC Threads::Threads)
+
+add_executable(chronofeed src/main.cpp)
+target_link_libraries(chronofeed PRIVATE chronofeed_core)
