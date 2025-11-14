@@ -36,3 +36,8 @@ target_link_libraries(chronofeed_core PUBLIC Threads::Threads)
 
 add_executable(chronofeed src/main.cpp)
 target_link_libraries(chronofeed PRIVATE chronofeed_core)
+
+if(CHRONOFEED_BUILD_TOOLS)
+  add_executable(chronofeed_pub tools/publisher.cpp)
+  target_link_libraries(chronofeed_pub PRIVATE chronofeed_core)
+endif()
