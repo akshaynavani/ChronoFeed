@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <cmath>
 #include <cstdlib>
 
 #include "chronofeed/ntp/discipline.hpp"
