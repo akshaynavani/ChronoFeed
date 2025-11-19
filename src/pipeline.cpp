@@ -8,8 +8,8 @@
 namespace chronofeed {
 
 namespace {
-std::unique_ptr<WallClockSource> make_clock(const NtpConfig& ntp) {
-  if (ntp.enabled) return std::make_unique<ntp::DisciplinedClock>();
+std::unique_ptr<WallClockSource> make_clock(const NtpConfig& ntp_cfg) {
+  if (ntp_cfg.enabled) return std::make_unique<ntp::DisciplinedClock>();
   return std::make_unique<SystemWallClock>();
 }
 }  // namespace

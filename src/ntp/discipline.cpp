@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <cstdlib>
 
 #include "chronofeed/log.hpp"
 #include "chronofeed/rt/thread.hpp"
