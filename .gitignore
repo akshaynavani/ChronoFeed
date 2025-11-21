@@ -17,9 +17,9 @@ compile_commands.json
 *.a
 *.so
 *.dylib
-chronofeed
-chronofeed_pub
-chronofeed_tests
+/chronofeed
+/chronofeed_pub
+/chronofeed_tests
 
 # Runtime output
 *.csv
